@@ -124,29 +124,29 @@
 				<Description>FLVPlayback</Description>
 				<Class>com.wowza.wms.module.ModuleFLVPlayback</Class>
 			</Module>
-            <Module>
-                <Name>TelvueAkamiPushPlugin</Name>
-                <Description>TelvueAkamiPushPlugin</Description>
-                <Class>com.telvue.wowza.TelvueAkamiPushPlugin</Class>
-            </Module> 
+                        <Module>
+                               <Name>TelvueAkamiPushPlugin</Name>
+                               <Description>TelvueAkamiPushPlugin</Description>
+                               <Class>com.telvue.wowza.TelvueAkamiPushPlugin</Class>
+                        </Module> 
 		</Modules>
 		<!-- Properties defined here will be added to the IApplication.getProperties() and IApplicationInstance.getProperties() collections -->
 		<Properties>
-                  <!-- Stream prefix. Valid values are: flv and mp4 -->
-<Property>
-	<Name>startupStreamsMonitorStreamPrefix</Name>
-	<Value>mp4</Value>
-</Property>
-<!-- MediaCaster type. Valid values are: rtp, rtp-record, shoutcast, shoutcast-record, liverepeater -->
-<Property>
-	<Name>startupStreamsMonitorMediaCasterType</Name>
-	<Value>liverepeater</Value>
-</Property>
-<!-- Pipe delimited list of file extensions for which to search -->
-<Property>
-	<Name>startupStreamsMonitorExtensionFilter</Name>
-	<Value>.stream|.sdp</Value>
-</Property>
+	                  <!-- Stream prefix. Valid values are: flv and mp4 -->
+			<Property>
+				<Name>startupStreamsMonitorStreamPrefix</Name>
+				<Value>mp4</Value>
+			</Property>
+			<!-- MediaCaster type. Valid values are: rtp, rtp-record, shoutcast, shoutcast-record, liverepeater -->
+			<Property>
+				<Name>startupStreamsMonitorMediaCasterType</Name>
+				<Value>liverepeater</Value>
+			</Property>
+			<!-- Pipe delimited list of file extensions for which to search -->
+			<Property>
+				<Name>startupStreamsMonitorExtensionFilter</Name>
+				<Value>.stream|.sdp</Value>
+			</Property>
 		</Properties>
 	</Application>
 </Root>
