@@ -1,7 +1,6 @@
 package com.telvue.wowza;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -10,11 +9,12 @@ import com.wowza.wms.amf.AMFPacket;
 import com.wowza.wms.application.IApplicationInstance;
 import com.wowza.wms.logging.WMSLoggerFactory;
 import com.wowza.wms.module.ModuleBase;
-import com.wowza.wms.plugin.pushpublish.protocol.rtmp.PushPublisherRTMP;
+import com.wowza.wms.plugin.pushpublish.protocol.rtmp.*;
+
 import com.wowza.wms.stream.IMediaStream;
 import com.wowza.wms.stream.IMediaStreamActionNotify2;
 
-public class TelvueAkamiPushPlugin extends ModuleBase
+public class TelvueAkamaiPushPlugin extends ModuleBase
 {
 	String baseDir = "/usr/local/WowzaMediaServer/pushConfigFiles/";
 	Map<IMediaStream, PushPublisherRTMP> publishers = new HashMap<IMediaStream, PushPublisherRTMP>();
@@ -22,11 +22,19 @@ public class TelvueAkamiPushPlugin extends ModuleBase
 	class StreamNotify implements IMediaStreamActionNotify2
 	{
 		File configDir = null;
+		
 		String akamaiUsername;
 		String akamaiPassword;
 		String akamaiHostName;
 		String akamaiDstApplicationName;
 		String akamaiDstStreamName;
+		
+		boolean sendFcPublish           = true;
+		boolean sendReleaseStream       = true;
+		boolean sendStreamCloseCommands = true;
+		boolean adaptiveStreaming       = false;
+		boolean debugLogging            = false;
+		
 		int akamaiPort;
 		
 		public StreamNotify(){
@@ -89,26 +97,47 @@ public class TelvueAkamiPushPlugin extends ModuleBase
 
 						// Destination stream
 						publisher.setHostname(akamaiHostName);
-						publisher.setDstApplicationName(akamaiDstApplicationName);
-						publisher.setDstStreamName(akamaiDstStreamName);
-
 						publisher.setPort(akamaiPort);
 
-						publisher.setSendFCPublish(true);
-						publisher.setSendReleaseStream(true);
-						publisher.setSendOriginalTimecodes(true);
+						publisher.setDstApplicationName(akamaiDstApplicationName);
+						publisher.setDstStreamName(akamaiDstStreamName);
+						
+						publisher.setDebugLog(debugLogging);
 
-						publisher.setAkamaiUserName(akamaiUsername);
-						publisher.setAkamaiPassword(akamaiPassword);
+						publisher.setSendFCPublish(sendFcPublish);
+						publisher.setSendReleaseStream(sendReleaseStream);
+						publisher.setSendStreamCloseCommands(sendStreamCloseCommands);
+						
+						publisher.setConnectionFlashVerion(PushPublisherRTMP.CURRENTFLASHVERSION);
+						
+		        if (PushPublisherRTMP.isFlashVerionFMLE(publisher.getConnectionFlashVerion()))  {
+		          PushPublishRTMPAuthProviderAdobe adobeRTMPAuthProvider = new PushPublishRTMPAuthProviderAdobe();
+
+		          adobeRTMPAuthProvider.init(publisher);
+		          adobeRTMPAuthProvider.setUserName(akamaiUsername);
+		          adobeRTMPAuthProvider.setPassword(akamaiPassword);
+
+		          publisher.setRTMPAuthProvider(adobeRTMPAuthProvider);
+		        }
+		        else{
+		          publisher.setAkamaiUserName(akamaiUsername);
+		          publisher.setAkamaiPassword(akamaiPassword);
+		        }
 
 
 						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: Akamai Credentials - " + publisher.getAkamaiUserName() + "--" + publisher.getAkamaiPassword() );
 						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: connecting to " + publisher.getContextStr());
 
-
+		        if (adaptiveStreaming)  {
+		          publisher.setSendOriginalTimecodes(true);
+		          publisher.setOriginalTimecodeThreshold(0x100000);
+		        }
+		        else  {
+		          publisher.setSendOriginalTimecodes(false);
+		        }
+						
 						publisher.connect();
 						publishers.put(stream, publisher);
-
 					}
 				}
 
@@ -119,8 +148,7 @@ public class TelvueAkamiPushPlugin extends ModuleBase
 			}
 		}
 
-		public void onUnPublish(IMediaStream stream, String streamName, boolean isRecord, boolean isAppend)
-		{
+		public void onUnPublish(IMediaStream stream, String streamName, boolean isRecord, boolean isAppend) {
 			stopPublisher(stream);
 		}
 		
@@ -170,6 +198,41 @@ public class TelvueAkamiPushPlugin extends ModuleBase
 				else if (tokens[0].equals("AkamaiPort")){
 					akamaiPort = Integer.parseInt(tokens[1]);
 					foundTokens++;
+				}
+				else if (tokens[0].equals("SendFcPublish")){
+					if(tokens[1].equals("true")) {
+						sendFcPublish = true;
+					} else if(tokens[1].equals("false")) {
+						sendFcPublish = false;
+					}
+				}
+				else if (tokens[0].equals("SendReleaseStream")){
+					if(tokens[1].equals("true")) {
+						sendReleaseStream = true;
+					} else if(tokens[1].equals("false")) {
+						sendReleaseStream = false;
+					}
+				}
+				else if (tokens[0].equals("SendStreamCloseCommands")){
+					if(tokens[1].equals("true")) {
+						sendStreamCloseCommands = true;
+					} else if(tokens[1].equals("false")) {
+						sendStreamCloseCommands = false;
+					}
+				}
+				else if (tokens[0].equals("DebugLogging")){
+					if(tokens[1].equals("true")) {
+						debugLogging = true;
+					} else if(tokens[1].equals("false")) {
+						debugLogging = false;
+					}
+				}
+				else if (tokens[0].equals("AdaptiveStreaming")){
+					if(tokens[1].equals("true")) {
+						adaptiveStreaming = true;
+					} else if(tokens[1].equals("false")) {
+						adaptiveStreaming = false;
+					}
 				}
 				else{
 					throw new Exception("Unknown key token: " + tokens[0]);

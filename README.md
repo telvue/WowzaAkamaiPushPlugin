@@ -28,7 +28,15 @@ The layout of the configuration file is very simple. There are 6 key:value pairs
 	AkamaiDstApplicationName:EntryPoint
 	AkamaiDstStreamName:Stream-Name@xxxx
 	AkamaiPort:1935
+	
+#### Optional Configuration Settings
+These settings are the Wowza recommended settings by default, but are configurable. 
 
+  DebugLogging:true
+  SendStreamCloseCommands:true
+  SendReleaseStream:true
+  SendFcPublish:true
+  AdaptiveStreaming:false
 
 All pairs are separated by a single ":" character, and reside on their own lines. All configuration files must be named after their stream names, and have the extension ".cnfg". So if there is a stream called MyStream, the configuration file would be "MyStream.cnfg"
 
