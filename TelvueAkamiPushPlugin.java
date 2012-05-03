@@ -22,25 +22,25 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 	class StreamNotify implements IMediaStreamActionNotify2
 	{
 		File configDir = null;
-		
+
 		String akamaiUsername;
 		String akamaiPassword;
 		String akamaiHostName;
 		String akamaiDstApplicationName;
 		String akamaiDstStreamName;
-		
+
 		boolean sendFcPublish           = true;
 		boolean sendReleaseStream       = true;
 		boolean sendStreamCloseCommands = true;
 		boolean adaptiveStreaming       = false;
 		boolean debugLogging            = false;
-		
+
 		int akamaiPort;
-		
+
 		public StreamNotify(){
-			
+
 		}
-		
+
 		public StreamNotify(File configDir){
 			this.configDir = configDir;
 		}
@@ -73,25 +73,28 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 		{
 			if (!streamName.startsWith("push-"))
 			{
+			
 				try
-				{
+				{	
 					IApplicationInstance appInstance = stream.getStreams().getAppInstance();
 					File configFile = new File(configDir, (streamName + ".cnfg"));
-					WMSLoggerFactory.getLogger(null).info("PushPublisher:: Config file name -> " + configFile.getName());
+					WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : Config file name -> " + configFile.getName());
+
 					if (configFile.exists() && configFile.isFile() && configFile.canRead()){
 						loadConfigParameters(configFile);
 					} else {
-					  return;
+						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : Config file not found " + configFile.getName());
+						return;
 					}
-
+					
 					synchronized(publishers)
 					{
 						PushPublisherRTMP publisher = new PushPublisherRTMP();
 
-						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: APPLICATION NAME ((" + appInstance.getApplication().getName() + "))");
-						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: APPINSTANCE NAME ((" + appInstance.getName() + "))");
-						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: STREAM NAME (("+ streamName + "))");
-						
+						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : APPLICATION NAME ((" + appInstance.getApplication().getName() + "))");
+						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : APPINSTANCE NAME ((" + appInstance.getName() + "))");
+						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : STREAM NAME (("+ streamName + "))");
+
 
 						// Source stream
 						publisher.setAppInstance(appInstance);
@@ -103,41 +106,41 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 
 						publisher.setDstApplicationName(akamaiDstApplicationName);
 						publisher.setDstStreamName(akamaiDstStreamName);
-						
+
 						publisher.setDebugLog(debugLogging);
 
 						publisher.setSendFCPublish(sendFcPublish);
 						publisher.setSendReleaseStream(sendReleaseStream);
 						publisher.setSendStreamCloseCommands(sendStreamCloseCommands);
-						
+
 						publisher.setConnectionFlashVerion(PushPublisherRTMP.CURRENTFLASHVERSION);
-						
-		        if (PushPublisherRTMP.isFlashVerionFMLE(publisher.getConnectionFlashVerion()))  {
-		          PushPublishRTMPAuthProviderAdobe adobeRTMPAuthProvider = new PushPublishRTMPAuthProviderAdobe();
 
-		          adobeRTMPAuthProvider.init(publisher);
-		          adobeRTMPAuthProvider.setUserName(akamaiUsername);
-		          adobeRTMPAuthProvider.setPassword(akamaiPassword);
+						if (PushPublisherRTMP.isFlashVerionFMLE(publisher.getConnectionFlashVerion()))  {
+							PushPublishRTMPAuthProviderAdobe adobeRTMPAuthProvider = new PushPublishRTMPAuthProviderAdobe();
 
-		          publisher.setRTMPAuthProvider(adobeRTMPAuthProvider);
-		        }
-		        else{
-		          publisher.setAkamaiUserName(akamaiUsername);
-		          publisher.setAkamaiPassword(akamaiPassword);
-		        }
+							adobeRTMPAuthProvider.init(publisher);
+							adobeRTMPAuthProvider.setUserName(akamaiUsername);
+							adobeRTMPAuthProvider.setPassword(akamaiPassword);
+
+							publisher.setRTMPAuthProvider(adobeRTMPAuthProvider);
+						}
+						else{
+							publisher.setAkamaiUserName(akamaiUsername);
+							publisher.setAkamaiPassword(akamaiPassword);
+						}
 
 
-						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: Akamai Credentials - " + publisher.getAkamaiUserName() + "--" + publisher.getAkamaiPassword() );
-						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: connecting to " + publisher.getContextStr());
+						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : Akamai Credentials - " + publisher.getAkamaiUserName() + "--" + publisher.getAkamaiPassword() );
+						WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : connecting to " + publisher.getContextStr());
 
-		        if (adaptiveStreaming)  {
-		          publisher.setSendOriginalTimecodes(true);
-		          publisher.setOriginalTimecodeThreshold(0x100000);
-		        }
-		        else  {
-		          publisher.setSendOriginalTimecodes(false);
-		        }
-						
+						if (adaptiveStreaming)  {
+							publisher.setSendOriginalTimecodes(true);
+							publisher.setOriginalTimecodeThreshold(0x100000);
+						}
+						else  {
+							publisher.setSendOriginalTimecodes(false);
+						}
+
 						publisher.connect();
 						publishers.put(stream, publisher);
 					}
@@ -145,7 +148,7 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 
 				catch(Exception e)
 				{
-					WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP: " + e.toString());
+					WMSLoggerFactory.getLogger(null).info("PushPublisherRTMP : " + e.toString());
 				}
 			}
 		}
@@ -153,7 +156,7 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 		public void onUnPublish(IMediaStream stream, String streamName, boolean isRecord, boolean isAppend) {
 			stopPublisher(stream);
 		}
-		
+
 		/**
 		 * Loads the application and stream specific data from the configuration files and makes them 
 		 * available to the rest of the program. This makes the plugin generic and capable of handling
@@ -163,7 +166,7 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 		 */
 		private void loadConfigParameters(File configFile) throws Exception{
 			Scanner configScanner = new Scanner(configFile);
-			
+
 			int count = 0;
 			int foundTokens = 0;
 			while(configScanner.hasNextLine()){
@@ -176,7 +179,7 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 				if (tokens.length != 2){
 					throw new Exception("Error in config file line " + count + ", invalid token count");
 				}
-				
+
 				if (tokens[0].equals("AkamaiUsername")){
 					akamaiUsername = tokens[1];
 					foundTokens++;
@@ -239,9 +242,11 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 				else{
 					throw new Exception("Unknown key token: " + tokens[0]);
 				}
-				
+
 			}
-			
+
+			configScanner.close();
+
 			if (foundTokens < 6){
 				throw new Exception("Invalid configuration file, not enouph configuration parameters found");
 			}
@@ -274,9 +279,9 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 			stream.addClientListener(new StreamNotify(pushConfigDir));
 		}
 		else{
-			WMSLoggerFactory.getLogger(null).info("Unable to find configuration directory for stream: " + stream.getStreams().getAppName());
+			WMSLoggerFactory.getLogger(null).info("Unable to find configuration directory for stream : " + stream.getStreams().getAppName());
 		}
-		
+
 	}
 
 	public void onStreamDestory(IMediaStream stream)
