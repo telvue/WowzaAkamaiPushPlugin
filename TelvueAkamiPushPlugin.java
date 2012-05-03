@@ -80,6 +80,8 @@ public class TelvueAkamaiPushPlugin extends ModuleBase
 					WMSLoggerFactory.getLogger(null).info("PushPublisher:: Config file name -> " + configFile.getName());
 					if (configFile.exists() && configFile.isFile() && configFile.canRead()){
 						loadConfigParameters(configFile);
+					} else {
+					  return;
 					}
 
 					synchronized(publishers)
